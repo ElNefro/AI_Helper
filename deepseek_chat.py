@@ -1,5 +1,3 @@
-
-
 import tkinter as tk
 from tkinter import scrolledtext, messagebox, font
 import threading
@@ -40,7 +38,7 @@ class MessageStyle:
 class ChatBubble(tk.Frame):
     """Виджет сообщения в виде облачка с кнопкой копирования"""
 
-    def __init__(self, parent, text, style: MessageStyle, max_width=300, message_id=None, **kwargs):
+    def __init__(self, parent, text, style: MessageStyle, max_width=400, message_id=None, **kwargs):
         super().__init__(parent, bg='#1a1a1a', **kwargs)
 
         self.style = style
@@ -115,47 +113,19 @@ class ChatBubble(tk.Frame):
         # Текст сообщения с переносами
         wrapped_text = self.wrap_text(self.text)
 
-        # Создаем прокручиваемый текст для длинных сообщений
-        if len(wrapped_text) > 300:
-            # Для длинных сообщений используем Text виджет
-            text_frame = tk.Frame(bubble_frame, bg=self.style.bg_color)
-            text_frame.pack(fill='both', expand=True)
-
-            # Добавляем прокрутку если нужно
-            text_widget = tk.Text(
-                text_frame,
-                wrap=tk.WORD,
-                font=("Segoe UI", 10),
-                fg=self.style.text_color,
-                bg=self.style.bg_color,
-                height=min(10, len(wrapped_text.split('\n'))),
-                relief='flat',
-                borderwidth=0,
-                highlightthickness=0,
-                padx=12,
-                pady=8
-            )
-            text_widget.insert('1.0', wrapped_text)
-            text_widget.config(state='disabled')
-            text_widget.pack(fill='both', expand=True)
-
-            # Добавляем возможность выделения
-            text_widget.bind('<Button-1>', lambda e: text_widget.focus_set())
-
-        else:
-            # Для коротких сообщений используем Label
-            message_label = tk.Label(
-                bubble_frame,
-                text=wrapped_text,
-                font=("Segoe UI", 10),
-                fg=self.style.text_color,
-                bg=self.style.bg_color,
-                justify='left',
-                wraplength=self.max_width - 20,
-                padx=12,
-                pady=8
-            )
-            message_label.pack()
+        # ВСЕГДА используем Label с динамической высотой
+        message_label = tk.Label(
+            bubble_frame,
+            text=wrapped_text,
+            font=("Segoe UI", 10),
+            fg=self.style.text_color,
+            bg=self.style.bg_color,
+            justify='center',
+            wraplength=self.max_width - 20,  # Максимальная ширина с учетом отступов
+            padx=12,
+            pady=8
+        )
+        message_label.pack()
 
         # Фрейм для времени и кнопок
         bottom_frame = tk.Frame(text_container, bg='#1a1a1a')
@@ -195,18 +165,40 @@ class ChatBubble(tk.Frame):
 
     def wrap_text(self, text):
         """Форматирование текста с переносами"""
-        max_line_length = 50
-        lines = text.split('\n')
-        wrapped_lines = []
+        # Автоматическое определение максимальной длины строки
+        max_line_length = 60
 
-        for line in lines:
-            if len(line) <= max_line_length:
-                wrapped_lines.append(line)
+        # Разбиваем текст на абзацы
+        paragraphs = text.split('\n')
+        wrapped_paragraphs = []
+
+        for paragraph in paragraphs:
+            if len(paragraph) <= max_line_length:
+                wrapped_paragraphs.append(paragraph)
             else:
-                wrapped = textwrap.fill(line, width=max_line_length)
-                wrapped_lines.extend(wrapped.split('\n'))
+                # Используем textwrap для переноса длинных строк
+                words = paragraph.split()
+                lines = []
+                current_line = []
+                current_length = 0
 
-        return '\n'.join(wrapped_lines)
+                for word in words:
+                    word_length = len(word)
+                    if current_length + word_length + (1 if current_line else 0) <= max_line_length:
+                        current_line.append(word)
+                        current_length += word_length + (1 if current_line else 0)
+                    else:
+                        if current_line:
+                            lines.append(' '.join(current_line))
+                        current_line = [word]
+                        current_length = word_length
+
+                if current_line:
+                    lines.append(' '.join(current_line))
+
+                wrapped_paragraphs.append('\n'.join(lines))
+
+        return '\n'.join(wrapped_paragraphs)
 
     def copy_text(self):
         """Копирование текста сообщения в буфер обмена"""
@@ -268,7 +260,7 @@ class DeepSeekChatApp:
         self.gui_queue = queue.Queue()
 
         # История диалога с системным промптом
-        self.system_prompt = "You are a helpful assistant. Keep answers concise."
+        self.system_prompt = "Ты портативный помощник, который может проконсультировать по любому вопросу. Ориентация текста в твоих ответах - по середине, по этому подстраивай свои ответы под этот параметр "
         self.conversation_history = [
             {"role": "system", "content": self.system_prompt}
         ]
@@ -400,7 +392,7 @@ class DeepSeekChatApp:
         self.chat_window.overrideredirect(True)
 
         # Размер и позиция
-        window_width = 480
+        window_width = 500
         window_height = 700
 
         screen_width = self.chat_window.winfo_screenwidth()
@@ -439,7 +431,7 @@ class DeepSeekChatApp:
         gradient_line.pack(fill='x', side='top')
 
         # Создаем градиент
-        width = 480
+        width = 500
         for i in range(width):
             r = int(41 + (66 - 41) * i / width)
             g = int(168 + (195 - 168) * i / width)
@@ -507,7 +499,7 @@ class DeepSeekChatApp:
 
         # Создаем окно в canvas для фрейма
         self.canvas_window = self.chat_canvas.create_window(
-            (0, 0), window=self.chat_frame, anchor="nw", width=440
+            (0, 0), window=self.chat_frame, anchor="nw", width=460
         )
 
         # Привязка событий
@@ -546,7 +538,7 @@ class DeepSeekChatApp:
         self.input_text.bind('<Return>', self.on_enter_pressed)
 
         # Подсказка в поле ввода
-        self.placeholder = "Введите сообщение..."
+        self.placeholder = ""
         self.input_text.insert('1.0', self.placeholder)
         self.input_text.tag_add('placeholder', '1.0', 'end')
         self.input_text.tag_config('placeholder', foreground='#666666')
@@ -659,17 +651,17 @@ class DeepSeekChatApp:
             self.chat_frame,
             text,
             style,
-            max_width=300,
+            max_width=400,
             message_id=message_id
         )
 
         # Добавляем отступы в зависимости от типа сообщения
         if sender_type == 'user':
-            bubble.pack(fill='x', padx=(40, 5), pady=12, anchor='e')
+            bubble.pack(fill='x', padx=(40, 5), pady=8, anchor='e')
         elif sender_type in ['welcome', 'api_info', 'system']:
-            bubble.pack(fill='x', padx=5, pady=12, anchor='center')
+            bubble.pack(fill='x', padx=5, pady=8, anchor='center')
         else:
-            bubble.pack(fill='x', padx=(5, 40), pady=12, anchor='w')
+            bubble.pack(fill='x', padx=(5, 40), pady=8, anchor='w')
 
         # Сохраняем ссылку на сообщение
         if not hasattr(self, 'messages'):
@@ -757,7 +749,7 @@ class DeepSeekChatApp:
                     "Content-Type": "application/json"
                 },
                 json=request_data,
-                timeout=30
+                timeout=100
             )
 
             # Проверяем ответ
