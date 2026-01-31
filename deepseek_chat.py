@@ -98,7 +98,7 @@ class ChatBubble(tk.Frame):
             name_label = tk.Label(
                 name_frame,
                 text=self.style.name,
-                font=("Segoe UI", 9, "bold"),
+                font=("Segoe UI", 12, "bold"),
                 fg=self.style.name_color,
                 bg='#1a1a1a',
                 anchor='w' if self.style.align == 'left' else 'e'
@@ -117,12 +117,12 @@ class ChatBubble(tk.Frame):
         message_label = tk.Label(
             bubble_frame,
             text=wrapped_text,
-            font=("Segoe UI", 10),
+            font=("Segoe UI", 12, "bold"),
             fg=self.style.text_color,
             bg=self.style.bg_color,
-            justify='center',
+            justify='left',
             wraplength=self.max_width - 20,  # Максимальная ширина с учетом отступов
-            padx=12,
+            padx=35,
             pady=8
         )
         message_label.pack()
@@ -260,7 +260,7 @@ class DeepSeekChatApp:
         self.gui_queue = queue.Queue()
 
         # История диалога с системным промптом
-        self.system_prompt = "Ты портативный помощник, который может проконсультировать по любому вопросу. Ориентация текста в твоих ответах - по середине, по этому подстраивай свои ответы под этот параметр "
+        self.system_prompt = "Ты портативный помощник, который может проконсультировать по любому вопросу. Ориентация текста в твоих ответах - по середине, по этому подстраивай свои ответы под этот параметр. Первым делом задай вопрос, на счет велечины ответа и действуй по дальнейшим настройкам пользователя. Отвечай без markdown разметки"
         self.conversation_history = [
             {"role": "system", "content": self.system_prompt}
         ]
